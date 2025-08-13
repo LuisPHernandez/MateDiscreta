@@ -74,5 +74,46 @@ c = equivalentes('not (a and b)','not a and not b')
 print(c)
 
 
+def _normaliza(expr: str) -> str:
+    # minusculas + reemplazos lógicos
+    e = expr.lower()
+    e = e.replace("|iff|", "==").replace("|implies|", "<=")
+    return e
 
+
+def tautologia(expr: str) -> bool:
+    """
+    Retorna True sii la proposición 'expr' es una tautología.
+    - Variables válidas: letras minúsculas a..z
+    - Operadores: not, and, or, |implies|, |iff|
+    """
+    # Normalizar (lower + reemplazos)
+    e = _normaliza(expr)
+
+    # se buscan los tokens
+    tokens = re.findall(r"[a-z]+", e)
+    invalidos = [t for t in tokens if t not in VARIABLES and t not in PALABRAS_RESERVADAS]
+    if invalidos:
+        raise ValueError(f"Token(s) inválido(s): {sorted(set(invalidos))}")
+
+    # Variables presentes (orden ascendente)
+    var_presentes = sorted({t for t in tokens if t in VARIABLES})
+
+    # Generar 2^n combinaciones en orden binario convencional
+    for valores in itertools.product([False, True], repeat=len(var_presentes)):
+        asignacion = dict(zip(var_presentes, valores))
+        # Evaluar con entorno seguro: sin globals, solo las variables
+        try:
+            valor = eval(e, {}, asignacion)
+        except NameError as ex:
+            # Si hubiera algo raro sin definir
+            raise ValueError(f"Variable no definida en la expresión: {ex}") from ex
+        # Si alguna fila da False, no es tautología
+        if not bool(valor):
+            return False
+    return True
+
+
+print(tautologia('(a and b) |implies| a'))  
+print(tautologia('p |iff| q'))              
     
