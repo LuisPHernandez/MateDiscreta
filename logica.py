@@ -141,4 +141,36 @@ def tautologia(expr: str) -> bool:
 
 print(tautologia('(a and b) |implies| a'))  
 print(tautologia('p |iff| q'))              
-    
+
+def inferencia(expr: str) -> list[list[bool]]:
+    expr = expr.lower().strip()
+
+    # Separa la posicion y el valor que se espera.
+    if "=" not in expr:
+        raise ValueError("La proposición debe contener un '=' seguido de 0 o 1.") # si no hay un '=' en la expresion tira error.
+    proposicion, valor_str = expr.split("=")
+    valor_esperado = True if valor_str.strip() == "1" else False # si el valor esperado es 1 es Verdadero y si es 0 es falso.
+
+    # Encuentra las variables presentes.
+    tokens = re.findall(r"[a-z]+", proposicion)
+    # hace una revision para asegurarse de que t no sea una palabra reservada.
+    var_presentes = sorted({t for t in tokens if t in VARIABLES and t not in PALABRAS_RESERVADAS})
+
+    # convierte los operadores para poder usarlos.
+    proposicion = proposicion.replace("|iff|", "==").replace("|implies|", "<=")
+
+    resultados = []
+
+    # Prueba todas las combinaciones posibles.
+    for combinacion in itertools.product([False, True], repeat=len(var_presentes)):
+        # Hace parejas de los valores y las posibles combinaciones en el diccionario.
+        valores = dict(zip(var_presentes, combinacion))
+        try:
+            resultado = eval(proposicion, {}, valores)
+        except Exception as e:
+            raise ValueError(f"Error al evaluar la proposición: {e}")
+
+        if resultado == valor_esperado:
+            resultados.append(list(combinacion))
+
+    return resultados
