@@ -38,8 +38,8 @@ def es_proposicion_valida(expr: str) ->bool:
         return False
 
     # Se usa una expresión regular para buscar en el string.
-    # Se devuelve False si se encuentra algo que no sea (^) minúscula (a-z), espacio (\s), '=', '(', ')' o '|'
-    return not bool(re.search(r"[^a-z=\s\(\)\|]", expr))
+    # Se devuelve False si se encuentra algo que no sea (^) minúscula (a-z), espacio (\s), '(', ')' o '|'
+    return not bool(re.search(r"[^a-z\s\(\)\|]", expr))
 
 def es_expr_de_inferencia_valida(expr: str) ->bool:
     """
@@ -83,11 +83,10 @@ def tabla_verdad(expr: str) ->list[list[bool]]:
     """
     # 1. Verificar que la proposición cumpla con las restricciones, si no las cumple se termina la ejecución
     if (not es_proposicion_valida(expr)):
-        raise ValueError("Proposición inválida: use solo variables en minúscula")
+        raise ValueError("Proposición inválida: use solo letras minúsculas para variables")
 
     # 2. Extraer variables usando la función de la plantilla
     var_presentes = extract_variables(expr)
-    print(var_presentes)
     
     tabla = []
 
@@ -99,7 +98,7 @@ def tabla_verdad(expr: str) ->list[list[bool]]:
         # 5. Intentar evaluar la proposición para los valores de verdad de la iteración actual
         try:
             resultado = eval(expr, globals(), valor_actual)
-        except:
+        except Exception as e:
             raise ValueError("Proposición sintácticamente inválida según las reglas de la lógica proposicional")
         
         # 6. Guardar los valores y el resultado en la tabla
