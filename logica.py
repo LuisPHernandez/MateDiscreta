@@ -88,7 +88,7 @@ def tabla_verdad(expr: str) ->list[list[bool]]:
     tabla = []
 
     # 3. Ciclo para generar todas las combinaciones posibles de valores de verdad
-    for valores_de_verdad in itertools.product([False, True], repeat=len(var_presentes)):
+    for valores_de_verdad in producto_binario(len(var_presentes)):
         # 4. Crear diccionario que empareja las variables a sus valores de verdad de la iteración actual
         valor_actual = dict(zip(var_presentes, valores_de_verdad))
         
