@@ -1,42 +1,67 @@
 import re, itertools
+from functools import partial
+
+# ********************** COMIENZO PLANTILLA *******************************
+class Infix(object):
+    def __init__(self, func):
+        self.func = func
+    def __or__(self, other):
+        return self.func(other)
+    def __ror__(self, other):
+        return Infix(partial(self.func, other))
+    def __call__(self, v1, v2):
+        return self.func(v1, v2)
+    
+@Infix
+def implies(p, q) :
+    return not p or q
+
+@Infix
+def iff(p, q) :
+    return (p |implies| q) and (q |implies| p)
+
+def extract_variables(expression):
+    sorted_variable_set = sorted(set(re.findall(r'\b[a-z]\b', expression)))
+    return sorted_variable_set
+# ********************** FIN PLANTILLA ************************************
 
 VARIABLES = list(map(chr, range(97, 123)))
 PALABRAS_RESERVADAS = {"and", "or", "not", "implies", "iff"}
 
 # Función que devuelve una lista de listas de valores booleanos que representan la tabla de verdad de una proposición
-def tabla_de_verdad(proposicion: str):
-    # Se encuentran todas las palabras y variables en la proposición usando una expresion regular
-    tokens = re.findall(r"[a-z]+", proposicion.lower())
-
-    # Se extraen las variables y se ordenan en forma ascendente
-    var_presentes = sorted({i for i in tokens if i in VARIABLES and i not in PALABRAS_RESERVADAS})
+def tabla_verdad(expr: str) ->list[list[bool]]:
+    # 1. Extraer variables usando la función de la plantilla
+    var_presentes = [v for v in extract_variables(expr) if v not in PALABRAS_RESERVADAS]
     
-    # Se prepara la proposicion para ser evaluada
-    proposicion = proposicion.replace("|iff|", "==").replace("|implies|", " <= ")
-
-    print(proposicion)
-
-    # Se crea la lista que funcionará como tabla de verdad
     tabla = []
 
-    # Se itera sobre todas las combinaciones posibles de valores de verdad dependiendo del número de variables usando itertools
+     # 2. Ciclo para generar todas las combinaciones posibles de valores de verdad
     for valores_de_verdad in itertools.product([False, True], repeat=len(var_presentes)):
-        # Se asigna el valor de verdad correspondiente a la iteración a cada variable usando un diccionario
         valor_actual = dict(zip(var_presentes, valores_de_verdad))
-
-        # Se obtiene el resultado de la proposicion con los valores actuales de verdad
-        resultado = eval(proposicion, {}, valor_actual)
-
-        # Se guarda la lista correspondiente a la iteracion en la tabla de verdad
+        
+        # 3. Evaluar la proposición para los valores de verdad de la iteración actual
+        resultado = eval(expr, globals(), valor_actual)
+        
+        # 4. Guardar los valores y el resultado en la tabla
         tabla.append(list(valores_de_verdad) + [resultado])
-
+    
     return tabla
 
+# Función que devuelve True si la proposición ingresada es una tautología, False para cualquier otro caso
+def tautologia(expr: str) ->bool:
+    # 1. Sacar la tabla de verdad para la proposición ingresada
+    tabla = tabla_verdad(expr)
 
-a = tabla_de_verdad("(not (a and b)) |implies| (c and a)") 
-print(a)
+    # 2. Ciclo para verificar si los resultados para todos los valores de verdad son True
+    contador_true = 0
+    for fila in tabla:
+        if (fila[-1] is True):
+            contador_true += 1
+    
+    # 3. Devolver True si la proposición es verdadera para todos los valores de verdad, False en cualquier otro caso
+    return contador_true == len(tabla)
 
-#FUncion que evalua 2 expresiones, para ver si son logicamente equivalentes 
+# Funcion que evalua 2 expresiones, para ver si son logicamente equivalentes 
 def equivalentes(expr1: str, expr2: str):
 
    # se modifican ambas expresiones, para estar listas para ser evaluadas 
@@ -83,7 +108,7 @@ def _normaliza(expr: str) -> str:
 
 def tautologia(expr: str) -> bool:
     """
-    Retorna True sii la proposición 'expr' es una tautología.
+    Retorna True si la proposición 'expr' es una tautología.
     - Variables válidas: letras minúsculas a..z
     - Operadores: not, and, or, |implies|, |iff|
     """
