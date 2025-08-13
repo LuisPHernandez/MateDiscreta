@@ -25,9 +25,6 @@ def extract_variables(expression):
     return sorted_variable_set
 # ********************** FIN PLANTILLA ************************************
 
-VARIABLES = list(map(chr, range(97, 123)))
-PALABRAS_RESERVADAS = {"and", "or", "not", "implies", "iff"}
-
 def es_proposicion_valida(expr: str) ->bool:
     """
     Función que devuelve False si una expresión tiene mayúsculas, dígitos, símbolos especiales no aceptados 
